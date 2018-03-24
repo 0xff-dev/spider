@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-BASE_URL = 'http://202.199.96.30/'
+BASE_URL = '*******'
 LOGIN_METHOD = 'ACTIONLOGON.APPPROCESS?mode=4'
 CAPTCHA_METHOD = 'ACTIONVALIDATERANDOMPICTURE.APPPROCESS'
 CLASS_METHOD = 'ACTIONQUERYCLASSSTUDENT.APPPROCESS?mode=2&query=1'
@@ -14,6 +14,6 @@ HEADERS = {
         'Referer': BASE_URL,
         }
 CLASS_ID = ['学号', '姓名', '性别']
-TEACHER_ID = '15025'
-TEACHER_ID_PASSWORD = '000000'
+TEACHER_ID = '****'
+TEACHER_ID_PASSWORD = '*****'
 
