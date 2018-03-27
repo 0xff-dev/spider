@@ -72,8 +72,7 @@ def get_student_term_info(student_ID,  end_year_term_no):
             'YearTermNO': end_year_term_no,
             'EndYearTermNO': end_year_term_no,
             'ByStudentNO': int(student_ID)
-            }
-
+        }
     student_name = db.get_student_name(student_ID)[0]['姓名']
     try:
         data_dcit = db.get_student_info_by_id(student_ID)[0]
@@ -84,6 +83,7 @@ def get_student_term_info(student_ID,  end_year_term_no):
     response = requests.post(BASE_URL+RESULT_METHOD, headers=HEADERS, data=post_data, 
             cookies=cookies)
     sp_obj = BeautifulSoup(response.content, 'html.parser')
+
     all_tables = sp_obj.find_all('table')[4].find_all('tr')[1:]
     for tr in all_tables:
         tds = tr.find_all('td')
@@ -104,4 +104,40 @@ def get_student_term_info(student_ID,  end_year_term_no):
     print (data_dcit)
     return data_dcit
 
+def download_all_term_info(ByStudentNO: str) -> None:
+    
+    flag = True
+    cookies = login(TEACHER_ID, TEACHER_ID_PASSWORD)
+    db = DBManager()
+    post_data = {
+            'ByStudentNO': ByStudentNO,
+        }
+   
+    res = requests.post(BASE_URL+ALL_TERM_METHOD, headers=HEADERS, data=post_data, 
+            cookies=cookies)
+    sp_obj = BeautifulSoup(res.content, 'html.parser')
+    GPA = sp_obj.find('script', {'defer':'', 'language': 'JavaScript'}).string.split(';')[0][-4:]
+    student_name = db.get_student_name(ByStudentNO)[0]["姓名"]
+    try:
+        data_dcit = db.get_all_term_info_by_id(ByStudentNO)[0]
+    except Exception as e:
+        flag = False
+        data_dcit = {
+                "姓名": student_name,
+                "学号": ByStudentNO,
+                "学分绩点": GPA,
+                }
+    for tr in sp_obj.find_all('table')[-1].find_all('tr')[1:]:
+        tds = tr.find_all('td')
+        # 数据进入数据库
+        if tds[1].string not in data_dcit.keys():
+            data_dcit[tds[1].string] = {}
+        data_dcit[tds[1].string][tds[4].string] = {
+                "成绩": tds[-2].string,
+                "课程性质": tds[-1].string,
+            }
+    if not flag:
+        db.insert_all_term_info(data_dcit)
+    else:
+        db.update_all_term_info_by_id(ByStudentNO, data_dcit)
 
