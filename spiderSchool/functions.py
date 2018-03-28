@@ -12,7 +12,6 @@ from config.cs_config import *
 
 
 def login(WebUserNO: str, Password: str) -> None:
-
     while True:
         try:
             captcha, cookies = get_code_cookies(BASE_URL+CAPTCHA_METHOD)
@@ -21,8 +20,9 @@ def login(WebUserNO: str, Password: str) -> None:
                     'Password': Password,
                     'Agnomen': int(captcha)
                 }
-            login_request = requests.post(BASE_URL+LOGIN_METHOD, headers=HEADERS, 
-                    data=login_data, cookies=cookies)
+            login_request = requests.post(BASE_URL+LOGIN_METHOD,
+                                          headers=HEADERS, data=login_data,
+                                          cookies=cookies)
             res_data = login_request.content.decode('GBK')
             if '正确的附加码' in res_data:
                 print ('验证码错误')
@@ -36,7 +36,6 @@ def login(WebUserNO: str, Password: str) -> None:
 
 
 def get_term() -> int:
-
     first_term_months = set([i for i in range(3, 9)])
     second_term_months = set([i for i in range(1, 13)]) - first_term_months
     date = datetime.now()
@@ -49,22 +48,29 @@ def get_term() -> int:
 
 
 def download_class_info(_class_id: str) -> dict:
-
     cookies = login(TEACHER_ID, TEACHER_ID_PASSWORD)
     post_data = {'ClassNO': _class_id}
-    res = requests.post(BASE_URL+CLASS_METHOD, headers=HEADERS, data=post_data, 
-            cookies=cookies)
+    res = requests.post(BASE_URL+CLASS_METHOD, headers=HEADERS,
+                        data=post_data, cookies=cookies)
     sp_obj = BeautifulSoup(res.content, 'html.parser')
     db_obj = DBManager()
     for tr in sp_obj.find_all('table')[1].findAll('tr')[1:-1]:
         row = tr.find_all('td')[1:4]
         row_dict = dict(zip(CLASS_ID, [row_data.string for row_data in row]))
-        db_obj.insert_class_info(row_dict)
+        post_data = {"ByStudentNO": row[0]}
+        res = requests.post(BASE_URL+STUDENT_IDCARD, headers=HEADERS,
+                            data=post_data, cookies=cookies)
+        tmp_obj = BeautifulSoup(res.content, 'html.parser')
+        table = tmp_obj.find_all('table')[0]
+        tr = table.find_all('tr')[5]
+        td = tr.find_all('td')[3].string
+        # db_obj.insert_class_info(row_dict)
+        row_dict['IDCARD'] = td
         print (row_dict)
+        db_obj.insert_class_info(row_dict)
 
 
 def get_student_term_info(student_ID,  end_year_term_no):
-
     flag = True
     db = DBManager()
     cookies = login(TEACHER_ID, TEACHER_ID_PASSWORD)
@@ -79,15 +85,13 @@ def get_student_term_info(student_ID,  end_year_term_no):
     except Exception as e:
         falg = False
         data_dcit = {'姓名': student_name, '学号': student_ID}
-
-    response = requests.post(BASE_URL+RESULT_METHOD, headers=HEADERS, data=post_data, 
-            cookies=cookies)
+    response = requests.post(BASE_URL+RESULT_METHOD, headers=HEADERS,
+                             data=post_data, cookies=cookies)
     sp_obj = BeautifulSoup(response.content, 'html.parser')
-
     all_tables = sp_obj.find_all('table')[4].find_all('tr')[1:]
     for tr in all_tables:
         tds = tr.find_all('td')
-        if tds[0].string == None:
+        if tds[0].string is None:
             break
         else:
             if tds[0].string not in data_dcit.keys():
@@ -104,19 +108,24 @@ def get_student_term_info(student_ID,  end_year_term_no):
     print (data_dcit)
     return data_dcit
 
+
 def download_all_term_info(ByStudentNO: str) -> None:
-    
     flag = True
     cookies = login(TEACHER_ID, TEACHER_ID_PASSWORD)
     db = DBManager()
     post_data = {
             'ByStudentNO': ByStudentNO,
         }
-   
-    res = requests.post(BASE_URL+ALL_TERM_METHOD, headers=HEADERS, data=post_data, 
-            cookies=cookies)
+    res = requests.post(BASE_URL+ALL_TERM_METHOD, headers=HEADERS,
+                        data=post_data,
+                        cookies=cookies)
     sp_obj = BeautifulSoup(res.content, 'html.parser')
-    GPA = sp_obj.find('script', {'defer':'', 'language': 'JavaScript'}).string.split(';')[0][-4:]
+    GPA = sp_obj.find('script',
+                      {'defer': '',
+                       'language': 'JavaScript'}).string.split(';')[0]
+    GPA = GPA[GPA.find('=')+1:]
+    if GPA.startswith('='):
+        GPA = GPA[1:]
     student_name = db.get_student_name(ByStudentNO)[0]["姓名"]
     try:
         data_dcit = db.get_all_term_info_by_id(ByStudentNO)[0]
