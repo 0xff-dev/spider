@@ -15,7 +15,10 @@
 
 
 ## 工具
-> PhantomJS
-> lxml
-> gevent
+> PhantomJS  
+> lxml  
+> gevent  
 
+
+## 截图
+![acm-train](./images/acm-train-spider.png)
