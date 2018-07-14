@@ -21,4 +21,4 @@
 
 
 ## 截图
-![acm-train](./images/acm-train-spider.png)
+![acm-train](images/acm-train-spider.png)
