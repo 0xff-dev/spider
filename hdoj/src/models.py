@@ -10,27 +10,10 @@ class DBManager(object):
 
     def insert(self, user: dict):
         self.__collection.insert_one(user)
+ 
+    def find_one(self, user):
+        # 查询一个用户的全部信息
+        return list(self.__collection.find_one({'user': user}))[0]
 
-    def insert_many(self, *args):
-        """
-        params: [User, User]
-        """
+    def options_find(sefl, **kwargs):
         pass
-
-    def find(self, **kwargs):
-        """
-        默认查询所有的
-        param: kwargs 过滤参数
-        """
-        try:
-            return self.__db.find()
-        except Exception as e:
-            raise (e.args)
-
-    def find_one(self, **kwargs):
-        pass
-
-    def update(self,  **kwargs):
-        """跟新个人信息, 主要是增加题数"""
-        pass
-
