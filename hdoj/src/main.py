@@ -20,7 +20,7 @@ brower = webdriver.PhantomJS()
 db = DBManager()
 
 
-def crawl_single_problem(p_id, url, _data: dict, db: DBManager):
+def crawl_single_problem(user, p_id, url, _data: dict, db: DBManager):
     """
     return: date 2018-01-01 define
     """
@@ -32,9 +32,11 @@ def crawl_single_problem(p_id, url, _data: dict, db: DBManager):
     print(date)
     # 获取提交的时间
     if date not in _data['date_ps'].keys():
-        _data['date_ps'][date] = set()
-    _data['date_ps'][date].add(p_id)
-    #db.insert(_data)
+        _data['date_ps'][date] = []
+        _data['date_ps'][date].append(p_id)
+    else:
+        if not db.is_exists(user, p_id, date):
+            _data['date_ps'][date].append(p_id)
     print(_data)
 
 
@@ -57,12 +59,12 @@ def crawl(user, db):
     for tag_a in tag_as:
         problem_id = tag_a.get('href').split('&')[1][4:]
         # 抛出id, +问题的url
-        tasks.append(gevent.spawn(crawl_single_problem(problem_id,
+        tasks.append(gevent.spawn(crawl_single_problem(user, problem_id,
                                   BASE_URL+tag_a.get('href'),
                                   _data, db)))
     gevent.joinall(tasks)
-
+    db.insert(_data)
 
 if __name__ == '__main__':
     # give me user list [(user, nick_name)]
-    crawl('acmer', db)
+    crawl('DayDayUp', db)
