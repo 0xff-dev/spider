@@ -8,7 +8,7 @@ import gevent
 from selenium import webdriver
 from lxml import etree
 
-from models import DBManager, User
+from models import DBManager
 
 
 BASE_URL = 'http://acm.hdu.edu.cn/'
@@ -24,6 +24,7 @@ def crawl_single_problem(p_id, url, _data: dict, db: DBManager):
     """
     return: date 2018-01-01 define
     """
+    gevent.sleep(2)
     brower.get(url)
     lxml_html = etree.HTML(brower.page_source)
     xpath = '//*[@id="fixed_table"]/table/tbody/tr[2]/td[2]'
@@ -31,8 +32,8 @@ def crawl_single_problem(p_id, url, _data: dict, db: DBManager):
     print(date)
     # 获取提交的时间
     if date not in _data['date_ps'].keys():
-        _data['date_ps'][date] = []
-    _data['date_ps'][date].append(p_id)
+        _data['date_ps'][date] = set()
+    _data['date_ps'][date].add(p_id)
     #db.insert(_data)
     print(_data)
 
@@ -64,4 +65,4 @@ def crawl(user, db):
 
 if __name__ == '__main__':
     # give me user list [(user, nick_name)]
-    crawl('DayDayUp', db)
+    crawl('acmer', db)
